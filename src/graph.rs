@@ -1,5 +1,6 @@
 use futures::stream::FuturesUnordered;
 use futures::{Future, StreamExt};
+use std::error::Error;
 use std::pin::Pin;
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use tokio::sync::broadcast::{channel, Receiver, Sender};
@@ -31,8 +32,12 @@ async fn run_node(node: &Rc<RefCell<Node>>, receivers: Vec<Receiver<String>>) {
     println!("Running node {name}");
     let mut inputs: Vec<String> = vec![];
     for mut r in receivers {
-        inputs.push(r.recv().await.unwrap());
-        println!("Got receiver value in {name}");
+        if let Ok(i) = r.recv().await {
+            inputs.push(i);
+            println!("Got receiver value in {name}");
+        } else {
+            unreachable!();
+        }
     }
     println!("Got all receiver values in {name}");
     let t = (node.clone().borrow().op)(inputs);
@@ -67,7 +72,7 @@ impl<'a> Graph {
         &mut self,
         entrypoint_value: String,
         output_name: String,
-    ) -> Result<String, tokio::sync::broadcast::error::RecvError> {
+    ) -> Result<String, Box<dyn Error>> {
         let (entrypoint_tx, _) = channel(1);
 
         self.channels
@@ -75,27 +80,44 @@ impl<'a> Graph {
 
         let mut tasks = FuturesUnordered::new();
 
-        let mut my_receiver = self.channels.get(&output_name).unwrap().subscribe();
+        let mut my_receiver = self
+            .channels
+            .get(&output_name)
+            .expect(&format!("Output node of name {output_name} does not exist"))
+            .subscribe();
 
         for node in self.graph.values() {
+            let parent_node_name = node.borrow().name.clone();
             let senders: Vec<Sender<String>> = node
                 .borrow()
                 .inputs
                 .iter()
-                .map(|name| self.channels.get(name).unwrap().clone())
+                .map(|name| {
+                    self.channels
+                        .get(name)
+                        .expect(&format!(
+                            "Node {parent_node_name} does not have {name} as an input"
+                        ))
+                        .clone()
+                })
                 .collect();
-            let receivers: Vec<Receiver<String>> =
-                senders.iter().map(tokio::sync::broadcast::Sender::subscribe).collect();
+            let receivers: Vec<Receiver<String>> = senders
+                .iter()
+                .map(tokio::sync::broadcast::Sender::subscribe)
+                .collect();
 
             let task = run_node(node, receivers);
             tasks.push(task);
         }
-        entrypoint_tx.send(entrypoint_value).unwrap();
+        entrypoint_tx.send(entrypoint_value)?;
 
         while let Some(()) = tasks.next().await {}
         println!("Done with FuturesUnordered");
-        let result = my_receiver.recv().await;
-        result
+        let result = my_receiver
+            .recv()
+            .await
+            .expect("Could not receive anything on the output channel");
+        Ok(result)
     }
 }
 
