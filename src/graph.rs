@@ -83,7 +83,7 @@ impl<'a> Graph {
         let mut my_receiver = self
             .channels
             .get(&output_name)
-            .expect(&format!("Output node of name {output_name} does not exist"))
+            .unwrap_or_else(|| panic!("Output node of name {output_name} does not exist"))
             .subscribe();
 
         for node in self.graph.values() {
@@ -95,9 +95,7 @@ impl<'a> Graph {
                 .map(|name| {
                     self.channels
                         .get(name)
-                        .expect(&format!(
-                            "Node {parent_node_name} does not have {name} as an input"
-                        ))
+                        .unwrap_or_else(|| panic!("Node {parent_node_name} does not have {name} as an input"))
                         .clone()
                 })
                 .collect();
