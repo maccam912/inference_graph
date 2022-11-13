@@ -28,23 +28,17 @@ impl Node {
 }
 
 async fn run_node(node: &Rc<RefCell<Node>>, receivers: Vec<Receiver<String>>) {
-    let name = node.borrow().name.clone();
-    println!("Running node {name}");
     let mut inputs: Vec<String> = vec![];
     for mut r in receivers {
         if let Ok(i) = r.recv().await {
             inputs.push(i);
-            println!("Got receiver value in {name}");
         } else {
             unreachable!();
         }
     }
-    println!("Got all receiver values in {name}");
     let t = (node.clone().borrow().op)(inputs);
     let result = t.await;
-    println!("Sending result in {name}");
     let _ = node.borrow().sender.send(result);
-    println!("Done in {name}");
 }
 
 #[derive(Default)]
@@ -95,7 +89,9 @@ impl<'a> Graph {
                 .map(|name| {
                     self.channels
                         .get(name)
-                        .unwrap_or_else(|| panic!("Node {parent_node_name} does not have {name} as an input"))
+                        .unwrap_or_else(|| {
+                            panic!("Node {parent_node_name} does not have {name} as an input")
+                        })
                         .clone()
                 })
                 .collect();
@@ -110,7 +106,6 @@ impl<'a> Graph {
         entrypoint_tx.send(entrypoint_value)?;
 
         while let Some(()) = tasks.next().await {}
-        println!("Done with FuturesUnordered");
         let result = my_receiver
             .recv()
             .await
