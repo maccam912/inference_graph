@@ -85,7 +85,7 @@ impl<'a> Graph {
                 .map(|name| self.channels.get(name).unwrap().clone())
                 .collect();
             let receivers: Vec<Receiver<String>> =
-                senders.iter().map(|sender| sender.subscribe()).collect();
+                senders.iter().map(tokio::sync::broadcast::Sender::subscribe).collect();
 
             let task = run_node(node, receivers);
             tasks.push(task);
