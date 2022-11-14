@@ -12,7 +12,7 @@ and converts it to the exact type needed.
 
 Creating a graph, adding some nodes that use an op to concatenate the strings passed in
 for the argument, and retrieving the output might look something like this:
-```
+```rust
 use inference_graph::graph::Graph;
 use inference_graph::wrap;
 
