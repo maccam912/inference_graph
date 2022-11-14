@@ -48,10 +48,12 @@ async fn run_node(node: &Rc<RefCell<Node>>, receivers: Vec<Receiver<String>>) {
     let _ = node.borrow().sender.send(result);
 }
 
+/// A `Graph` stores a bunch of `Node`s (added with `stage_node`). It also has the `run` method, which will
+/// let you pass in a `String` value to send to nodes referencing `entrypoint`, and let you request a final response
+/// from a `Node` by referencing it with `output_name`.
 #[derive(Default)]
 pub struct Graph {
     graph: HashMap<String, Rc<RefCell<Node>>>,
-    entrypoints: Vec<Rc<RefCell<Node>>>,
     channels: HashMap<String, Sender<String>>,
 }
 
@@ -70,7 +72,6 @@ impl<'a> Graph {
             op,
             tx.clone(),
         )));
-        self.entrypoints.push(node.clone());
         self.graph.insert(name.clone(), node);
         self.channels.insert(name, tx);
     }
@@ -130,6 +131,16 @@ impl<'a> Graph {
     }
 }
 
+/// The `wrap!` macro lets you pass in an `async fn(Vec<String>) -> String` function and it will converg
+/// it to the right type for a `Node`s `op` field.
+/// ```
+/// # use inference_graph::wrap;
+/// async fn concat_all(x: Vec<String>) -> String {
+///   x.concat()
+/// }
+///
+/// let wrapped_concat_all = wrap!(concat_all);
+/// ```
 #[macro_export]
 macro_rules! wrap {
     ($x:expr) => {
