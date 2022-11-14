@@ -1,6 +1,12 @@
 [package]
 name = "inference_graph"
-version = "0.1.1"
+description = "For building graphs of async tasks by having each node only refer to its own inputs."
+readme = "README.md"
+repository = "https://github.com/maccam912/inference_graph"
+license = "MIT"
+license-file = "LICENSE"
+keywords = ["DAG", "inference", "graph"]
+version = "0.1.0"
 edition = "2021"
 resolver = "2"
 
