@@ -49,8 +49,18 @@ mod config_tests {
         graph.stage_node("A".into(), vec!["entrypoint".into()], wrap!(concat));
         graph.stage_node("B".into(), vec!["entrypoint".into()], wrap!(concat));
         graph.stage_node("C".into(), vec!["A".into(), "B".into()], wrap!(concat));
+
         let output = graph.run("hubba".into(), "C".into()).await;
         assert!(output.is_ok());
         assert_eq!(output.unwrap(), "hubbahubba".to_string());
+
+        let output2 = graph.run("efficiency".into(), "B".into()).await;
+        let output3 = graph.run("blah".into(), "C".into()).await;
+
+        assert!(output2.is_ok());
+        assert!(output3.is_ok());
+
+        assert_eq!(output2.unwrap(), "efficiency".to_string());
+        assert_eq!(output3.unwrap(), "blahblah".to_string());
     }
 }

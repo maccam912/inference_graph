@@ -18,3 +18,8 @@ toml = "0.5"
 
 [dev-dependencies]
 tokio = { version = "1.21.2", features = ["rt-multi-thread", "macros"] }
+criterion = { version = "0.4.0", features = ["async_tokio"] }
+
+[[bench]]
+name = "inference_graph_benchmark"
+harness = false
