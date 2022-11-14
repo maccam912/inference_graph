@@ -1,3 +1,11 @@
+[![Crates.io][crates-badge]][crates-url]
+[![Docs.rs][docs-badge]][docs-url]
+
+[crates-badge]: https://img.shields.io/crates/v/inference_graph
+[crates-url]: https://crates.io/crates/inference_graph
+[docs-badge]: https://img.shields.io/docsrs/inference_graph
+[docs-url]: https://docs.rs/inference_graph
+
 `inference_graph` provides a few main items:
 - a `Graph` definition.
 - a way to add `Node`s to the `Graph` with `graph.stage_node`.
