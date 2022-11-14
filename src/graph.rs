@@ -7,8 +7,15 @@ use tokio::sync::broadcast::{channel, Receiver, Sender};
 
 type BoxedFuture<T = String> = Pin<Box<dyn Future<Output = T>>>;
 
+/// An `OpFn` is a regular function that returns a `Pin<Box<dyn Future<Output = String>>>`. This
+/// is because Rust gets upset if I try to create a type alias of an `async fn`. A macro `wrap!` is provided
+/// that will turn an `async fn(Vec<String>) -> String` into the `OpFn` type for you.
 type OpFn = fn(Vec<String>) -> BoxedFuture;
 
+/// A `Node` contains a `name` that other nodes use to refer to it, `inputs` to list the other `Node`s that it will require input from, and an operation `op`
+/// that will run when all inputs are ready. The `Node` lists the `name`s of other `Node`s and the order they should be in. The `op` must be a function
+/// that accepts a single argument of type `Vec<String>` which returns a `String`. This way, the other `Node`s referenced in `inputs`, when they have run,
+/// will have single `String`s that will be passed in as part of the `Vec<String>` input to this `Node`s op.
 pub struct Node {
     name: String,
     inputs: Vec<String>,
@@ -49,6 +56,12 @@ pub struct Graph {
 }
 
 impl<'a> Graph {
+    /// `stage_node` lets you add a `Node` to the graph by providing the `name`, a list of other `Node`s (referenced by their `name`)
+    /// that will be input to this `Node`s `op`, and finally the `op`. The simplest way to specify an `op` is to have an
+    /// `async fn(Vec<String>) -> String` and wrap it with the `wrap!` macro.
+    ///
+    /// *At least one of the nodes needs to have only a single input named `entrypoint` which is where the rest of the inference graph
+    /// will start.*
     pub fn stage_node(&mut self, name: String, inputs: Vec<String>, op: OpFn) {
         let (tx, _) = channel(1);
         let node = Rc::new(RefCell::new(Node::new(
@@ -62,6 +75,9 @@ impl<'a> Graph {
         self.channels.insert(name, tx);
     }
 
+    /// `run` lets you pass in a `String` that will be sent to any nodes referencing `entrypoint` in their inputs. You must also pass in
+    /// the `output_name` to reference the `Node` of that name as the final step in this run of the graph. Once that node has a value
+    /// from its `op`, it will be returned to you in the `Result`.
     pub async fn run(
         &mut self,
         entrypoint_value: String,

@@ -1,6 +1,6 @@
 [package]
 name = "inference_graph"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 resolver = "2"
 
@@ -12,4 +12,4 @@ tokio = { version = "1.21.2", features = ["sync"] }
 toml = "0.5"
 
 [dev-dependencies]
-tokio = { version = "1.21.2", features = ["rt", "macros"] }
+tokio = { version = "1.21.2", features = ["rt-multi-thread", "macros"] }
