@@ -30,6 +30,7 @@ async fn main() {
   let output = graph.run("hubba".into(), "C".into()).await;
   assert_eq!(output.unwrap(), "hubbahubba".to_string());
 }
+```
 */
 
 pub mod graph;

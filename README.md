@@ -1,4 +1,3 @@
-/*!
 `inference_graph` provides a few main items:
 - a `Graph` definition.
 - a way to add `Node`s to the `Graph` with `graph.stage_node`.
@@ -30,4 +29,4 @@ async fn main() {
   let output = graph.run("hubba".into(), "C".into()).await;
   assert_eq!(output.unwrap(), "hubbahubba".to_string());
 }
-*/
+```
